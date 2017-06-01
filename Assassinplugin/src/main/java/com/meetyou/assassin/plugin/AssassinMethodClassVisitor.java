@@ -26,6 +26,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     private boolean mAllReplace = false;
     private String mDelegate;
     private boolean assassin = true;
+    private String clazzName;
 
     public AssassinMethodClassVisitor(ClassVisitor classVisitor, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
@@ -33,7 +34,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     }
 
 
-    protected boolean jude(String type ){
+    protected boolean jude(String type){
         ArrayList<AssassinDO> inserts = mProcess.get(type);
         if(inserts == null){
             return false;
@@ -54,6 +55,22 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
         mDelegate = receiver;
         mAllInsert = jude("insert");
         mAllReplace = jude("replace");
+    }
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        super.visit(version, access, name, signature, superName, interfaces);
+        clazzName = name.replace("/",".");
+    }
+
+    @Override
+    public void visitOuterClass(String owner, String name, String desc) {
+        super.visitOuterClass(owner, name, desc);
+    }
+
+    @Override
+    public void visitEnd() {
+        super.visitEnd();
     }
 
     @Override
@@ -98,6 +115,10 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                 assassinDO.name = method;
                 assassinDO.des = "normal";
                 for(AssassinDO item : list){
+                    if(item.name.equals(method) && item.des.equals(clazzName)){
+                        //类相同
+                        return true;
+                    }
                     if(item.equals(assassinDO)){
                         return true;
                     }
@@ -108,6 +129,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodEnter() {
+                print("clazz:" + clazzName);
                 if(!assassin){
                     return;
                 }

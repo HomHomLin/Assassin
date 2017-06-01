@@ -34,15 +34,22 @@ public class PluginImpl extends Transform implements Plugin<Project> {
             arrayList = new ArrayList<>();
         }
         String m = it.trim().split("\\;")[0];
-        String[] r = m.trim().split("\\.");
         AssassinDO assassinDO = new AssassinDO();
-        if(r[0].trim().equals("**")){
-            //如果是两个*代表是全量
-            assassinDO.des = "all";
-        }else{
-            assassinDO.des = "normal";
+        if(!m.trim().startsWith("*")){
+            //包名
+            String[] r = m.trim().split("\\*");
+            assassinDO.des = r[0];//包名
+            assassinDO.name = r[1];
+        }else {
+            String[] r = m.trim().split("\\.");
+            if (r[0].trim().equals("**")) {
+                //如果是两个*代表是全量
+                assassinDO.des = "all";
+            } else if (r[0].trim().equals("*")) {
+                assassinDO.des = "normal";
+            }
+            assassinDO.name = r[1];
         }
-        assassinDO.name = r[1];
         arrayList.add(assassinDO);
         println assassinDO.toString()
         process.put(type, arrayList);
@@ -64,6 +71,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
         String type_default = "default";
         String type_insert = "insert";
         String type_replace = "replace";
+        String type_finsert = "finsert";
+        String type_freplace = "freplace";
         String type_receiver = "receiver";
         String curr_type = type_default;
 
@@ -83,6 +92,12 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 } else if (it.trim().startsWith("-receiver")) {
                     //监听器
                     curr_type = type_receiver;
+                } else if(it.trim().startsWith("-matchreplace")){
+                    //完整匹配替换
+                    curr_type = type_freplace;
+                } else if(it.trim().startsWith("-matchinsert")){
+                    //完整匹配插入
+                    curr_type = type_finsert;
                 }
                 //语法体
                 if (it.trim().endsWith(";")) {

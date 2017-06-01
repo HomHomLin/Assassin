@@ -1,13 +1,15 @@
--insert {
+-insert method{
+#   com.meetyou.aop.assassin.MainActivity*onCreate;
   **.all;
 #  *.<init>;
 #  *.onClick;
 }
 
--replace {
+-replace method{
 #  *.show;
 }
 
 -receiver {
   com.meetyou.aop.assassin.TestDelegate;
 }
+
