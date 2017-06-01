@@ -9,5 +9,5 @@
 }
 
 -receiver {
-  com.meetyou.receiver;
+  com.meetyou.aop.assassin.TestDelegate;
 }

@@ -20,10 +20,13 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 public class PluginImpl extends Transform implements Plugin<Project> {
 //    def props = new Properties()
     HashMap<String, ArrayList<AssassinDO>> process = new HashMap<>();
+    String mReceiver;
 
     void processFile(String type, String it){
         if(type.equals("receiver")){
             //接收器处理
+            mReceiver = it.trim().split("\\;")[0];
+            println "receiver:" + mReceiver
             return;
         }
         ArrayList<AssassinDO> arrayList = process.get(type);
@@ -161,7 +164,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                         !"R.class".equals(name) && !"BuildConfig.class".equals(name)) {
                                     ClassReader classReader = new ClassReader(file.bytes)
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
-                                    ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, process)
+                                    ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
                                     classReader.accept(cv, EXPAND_FRAMES)
                                     byte[] code = classWriter.toByteArray()
                                     FileOutputStream fos = new FileOutputStream(

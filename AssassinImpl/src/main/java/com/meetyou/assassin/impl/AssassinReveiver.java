@@ -1,13 +1,32 @@
 package com.meetyou.assassin.impl;
 
+import android.text.TextUtils;
 import android.util.Log;
+
+import com.meetyou.assassin.plugin.AntiAssassin;
 
 /**
  * Created by Linhh on 17/5/31.
  */
-
+@AntiAssassin
 public class AssassinReveiver {
   private static IAssassinDelegate mIAssassinDelegate;
+
+  public static void register(String name){
+    if(mIAssassinDelegate != null){
+      return;
+    }
+    try {
+      if(TextUtils.isEmpty(name)){
+        return;
+      }
+      Class<?> clazz = Class.forName(name);
+      mIAssassinDelegate = (IAssassinDelegate)clazz.newInstance();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
 
   public static void register(IAssassinDelegate delegate){
     mIAssassinDelegate = delegate;

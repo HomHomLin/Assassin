@@ -12,7 +12,7 @@ import java.util.HashMap;
 /**
  * Created by Linhh on 17/5/31.
  */
-
+@AntiAssassin
 public class AssassinMethodClassVisitor extends ClassVisitor {
 
     public final static String OPTION_NORAML = "normal";
@@ -24,10 +24,12 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
     private boolean mAllInsert = false;
     private boolean mAllReplace = false;
+    private String mDelegate;
+    private boolean assassin = true;
 
-    public AssassinMethodClassVisitor(ClassVisitor classVisitor, HashMap<String, ArrayList<AssassinDO>> process){
+    public AssassinMethodClassVisitor(ClassVisitor classVisitor, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
-        init(process);
+        init(receiver, process);
     }
 
 
@@ -47,10 +49,19 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
         return false;
     }
 
-    private void init(HashMap<String, ArrayList<AssassinDO>> process){
+    private void init(String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         mProcess = process;
+        mDelegate = receiver;
         mAllInsert = jude("insert");
         mAllReplace = jude("replace");
+    }
+
+    @Override
+    public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        if (Type.getDescriptor(AntiAssassin.class).equals(desc)) {
+            assassin = false;
+        }
+        return super.visitAnnotation(desc, visible);
     }
 
     @Override
@@ -58,8 +69,6 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                                      String[] exceptions) {
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions);
         methodVisitor = new AdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc) {
-
-
 
             public void print(String msg){
                     mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
@@ -78,11 +87,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 //                super.visitMethodInsn(opcode, owner, name, desc, itf);
 //            }
 
-//            @Override
-//            public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-//
-//                return super.visitAnnotation(desc, visible);
-//            }
+
 
             protected boolean findAssassin(String name, String method){
                 ArrayList<AssassinDO> list = mProcess.get(name);
@@ -103,6 +108,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodEnter() {
+                if(!assassin){
+                    return;
+                }
                 String type = "default";
                 if(!mAllInsert && !mAllReplace){
                     //非插入和非替换,需要判断是否是列表中
@@ -226,6 +234,13 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 //                        }
 //                    }
 
+                if(name.equals("<init>") && mDelegate != null && mDelegate.length() > 0){
+                    mv.visitLdcInsn(mDelegate);
+                    mv.visitMethodInsn(INVOKESTATIC, mReveiver, "register",
+                            "(Ljava/lang/String;)V", false);
+
+                }
+
                 //载入this到栈顶
                 loadThis();
                 mv.visitLdcInsn(name);
@@ -264,6 +279,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodExit(int i) {
+                if(!assassin){
+                    return;
+                }
                 String type = "default";
                 if(!mAllInsert && !mAllReplace){
                     //非插入和非替换,需要判断是否是列表中

@@ -3,7 +3,7 @@ package com.meetyou.assassin.plugin;
 /**
  * Created by Linhh on 17/5/31.
  */
-
+@AntiAssassin
 public class AssassinDO {
     public String name;
     public String des;//匹配类型,all还是normal
