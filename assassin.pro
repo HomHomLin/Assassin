@@ -1,6 +1,7 @@
 -insert {
-#  **.all;
-  *.onClick;
+  **.all;
+#  *.<init>;
+#  *.onClick;
 }
 
 -replace {
