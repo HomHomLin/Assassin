@@ -1,11 +1,10 @@
 -insert {
-  **.all;
+#  **.all;
   *.onClick;
 }
 
 -replace {
-  **.all;
-  *.onClick;
+#  *.show;
 }
 
 -receiver {

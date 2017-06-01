@@ -1,13 +1,13 @@
 package com.meetyou.assassin.plugin;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by Linhh on 17/5/31.
@@ -15,25 +15,42 @@ import java.util.ArrayList;
 
 public class AssassinMethodClassVisitor extends ClassVisitor {
 
-    public final static String OPTION_DEFAULT = "default";
-    public final static String OPTION_CUSTOM = "custom";
+    public final static String OPTION_NORAML = "normal";
     public final static String OPTION_ALL = "all";
-
-    public final static String OPTION_NAME = "assassin.option";
 
     public String mReveiver = "com/meetyou/assassin/impl/AssassinReveiver";
 
-    private String mOption;
-    private ArrayList<AssassinDO> mProps;
+    private HashMap<String, ArrayList<AssassinDO>> mProcess;
 
-    public AssassinMethodClassVisitor(ClassVisitor classVisitor, String option, ArrayList<AssassinDO> props){
+    private boolean mAllInsert = false;
+    private boolean mAllReplace = false;
+
+    public AssassinMethodClassVisitor(ClassVisitor classVisitor, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
-        init(option, props);
+        init(process);
     }
 
-    private void init(String option, ArrayList<AssassinDO> props){
-        mProps = props;
-        mOption = option;
+
+    protected boolean jude(String type ){
+        ArrayList<AssassinDO> inserts = mProcess.get(type);
+        if(inserts == null){
+            return false;
+        }
+        AssassinDO all = new AssassinDO();
+        all.name = "all";
+        all.des = "all";
+        for(AssassinDO assassinDO : inserts){
+            if(assassinDO.equals(all)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void init(HashMap<String, ArrayList<AssassinDO>> process){
+        mProcess = process;
+        mAllInsert = jude("insert");
+        mAllReplace = jude("replace");
     }
 
     @Override
@@ -41,6 +58,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                                      String[] exceptions) {
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions);
         methodVisitor = new AdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc) {
+
+
+
             public void print(String msg){
                     mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
                     mv.visitLdcInsn(msg);
@@ -64,24 +84,33 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 //                return super.visitAnnotation(desc, visible);
 //            }
 
-            protected AssassinDO findAssassin(String name){
-                AssassinDO assassinDO = null;
-                for(AssassinDO item : mProps){
-                    if(item.equals(name)){
-                        assassinDO = item;
-                        break;
+            protected boolean findAssassin(String name, String method){
+                ArrayList<AssassinDO> list = mProcess.get(name);
+                if(list == null){
+                    return false;
+                }
+                AssassinDO assassinDO = new AssassinDO();
+                assassinDO.name = method;
+                assassinDO.des = "normal";
+                for(AssassinDO item : list){
+                    if(item.equals(assassinDO)){
+                        return true;
                     }
                 }
-                return assassinDO;
+                return false;
             }
+
 
             @Override
             protected void onMethodEnter() {
-                AssassinDO assassinDO = null;
-                if(!mOption.equals(OPTION_ALL)) {
-                    assassinDO = findAssassin(name);
-                    if (assassinDO == null) {
-                        //没有该name的配置
+                String type = "default";
+                if(!mAllInsert && !mAllReplace){
+                    //非插入和非替换,需要判断是否是列表中
+                    if(findAssassin("insert", name)){
+                        type = "insert";
+                    }else if(findAssassin("replace", name)){
+                        type = "replace";
+                    }else{
                         return;
                     }
                 }
@@ -210,7 +239,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                 mv.visitVarInsn(ASTORE, start_index);
 
                 //如果拦截器为真
-                if(assassinDO != null && assassinDO.value.equals("override")) {
+                if(mAllReplace || type.equals("replace")) {
                     print("override:" + name);
 //                String methodKey = "method." + name;
 //                mv.visitMethodInsn(INVOKESTATIC, "com/meiyou/meetyoucost/TimeCache", "onIntecept", "()Z", false);
@@ -235,11 +264,14 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodExit(int i) {
-                AssassinDO assassinDO = null;
-                if(!mOption.equals(OPTION_ALL)) {
-                    assassinDO = findAssassin(name);
-                    if (assassinDO == null) {
-                        //没有该name的配置
+                String type = "default";
+                if(!mAllInsert && !mAllReplace){
+                    //非插入和非替换,需要判断是否是列表中
+                    if(findAssassin("insert", name)){
+                        type = "insert";
+                    }else if(findAssassin("replace", name)){
+                        type = "replace";
+                    }else{
                         return;
                     }
                 }

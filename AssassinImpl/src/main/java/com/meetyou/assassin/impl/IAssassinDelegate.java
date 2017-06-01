@@ -1,7 +1,5 @@
 package com.meetyou.assassin.impl;
 
-import android.util.Log;
-
 /**
  * Created by Linhh on 17/6/1.
  */

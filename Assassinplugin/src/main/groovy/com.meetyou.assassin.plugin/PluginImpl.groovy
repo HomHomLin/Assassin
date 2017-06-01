@@ -18,7 +18,33 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
  */
 
 public class PluginImpl extends Transform implements Plugin<Project> {
-    def props = new Properties()
+//    def props = new Properties()
+    HashMap<String, ArrayList<AssassinDO>> process = new HashMap<>();
+
+    void processFile(String type, String it){
+        if(type.equals("receiver")){
+            //接收器处理
+            return;
+        }
+        ArrayList<AssassinDO> arrayList = process.get(type);
+        if(arrayList == null){
+            arrayList = new ArrayList<>();
+        }
+        String m = it.trim().split("\\;")[0];
+        String[] r = m.trim().split("\\.");
+        AssassinDO assassinDO = new AssassinDO();
+        if(r[0].trim().equals("**")){
+            //如果是两个*代表是全量
+            assassinDO.des = "all";
+        }else{
+            assassinDO.des = "normal";
+        }
+        assassinDO.name = r[1];
+        arrayList.add(assassinDO);
+        println assassinDO.toString()
+        process.put(type, arrayList);
+    }
+
     void apply(Project project) {
         /*project.task('testTask') << {
              println "Hello gradle plugin!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -28,10 +54,42 @@ public class PluginImpl extends Transform implements Plugin<Project> {
          project.gradle.addListener(new TimeListener())
     */
         //读写配置
-        new File("assassin.properties").withInputStream {
-            stream -> props.load(stream)
-        }
+//        new File("assassin.properties").withInputStream {
+//            stream -> props.load(stream)
+//        }
 
+        String type_default = "default";
+        String type_insert = "insert";
+        String type_replace = "replace";
+        String type_receiver = "receiver";
+        String curr_type = type_default;
+
+        new File("assassin.pro").eachLine {
+            if(!it.trim().startsWith("#")) {
+                //#开头代表是注释,直接跳过
+                if (it.trim().startsWith("}")) {
+                    //终止
+                    curr_type = type_default;
+                }
+                if (it.trim().startsWith("-insert")) {
+                    //插入
+                    curr_type = type_insert;
+                } else if (it.trim().startsWith("-replace")) {
+                    //替换
+                    curr_type = type_replace;
+                } else if (it.trim().startsWith("-receiver")) {
+                    //监听器
+                    curr_type = type_receiver;
+                }
+                //语法体
+                if (it.trim().endsWith(";")) {
+                    println curr_type + ":" + it
+                    if (!curr_type.equals(type_default)) {
+                        processFile(curr_type, it)
+                    }
+                }
+            }
+        }
         //遍历class文件和jar文件，在这里可以进行class文件asm文件替换
         def android = project.extensions.getByType(AppExtension);
         android.registerTransform(this)
@@ -62,30 +120,30 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                    TransformOutputProvider outputProvider, boolean isIncremental) throws IOException, TransformException, InterruptedException {
         println '//===============asm visit start===============//'
         //配置文件读取
-        Iterator<String> it = props.stringPropertyNames().iterator();
-        ArrayList<AssassinDO> propsItem = new ArrayList<>();
-        String option  = AssassinMethodClassVisitor.OPTION_DEFAULT;
-        while(it.hasNext()){
-            String key = it.next();
-            String v = props[key];
-            //打印配置
-            println key + "=" + v
-            if(key.equals(AssassinMethodClassVisitor.OPTION_NAME)){
-                option = v;
-                continue;
-            }
-            //将配置数据封装
-            AssassinDO assassinDO = new AssassinDO();
-            String[] itemKey = key.split("\\.");
-            assassinDO.mate = itemKey[0];
-            assassinDO.type = itemKey[1];
-            assassinDO.key = itemKey[2];
-            assassinDO.value = v;
-
-            println assassinDO.toString()
-
-            propsItem.add(assassinDO);
-        }
+//        Iterator<String> it = props.stringPropertyNames().iterator();
+//        ArrayList<AssassinDO> propsItem = new ArrayList<>();
+//        String option  = AssassinMethodClassVisitor.OPTION_DEFAULT;
+//        while(it.hasNext()){
+//            String key = it.next();
+//            String v = props[key];
+//            //打印配置
+//            println key + "=" + v
+//            if(key.equals(AssassinMethodClassVisitor.OPTION_NAME)){
+//                option = v;
+//                continue;
+//            }
+//            //将配置数据封装
+//            AssassinDO assassinDO = new AssassinDO();
+//            String[] itemKey = key.split("\\.");
+//            assassinDO.mate = itemKey[0];
+//            assassinDO.type = itemKey[1];
+//            assassinDO.key = itemKey[2];
+//            assassinDO.value = v;
+//
+//            println assassinDO.toString()
+//
+//            propsItem.add(assassinDO);
+//        }
         //遍历inputs里的TransformInput
         inputs.each { TransformInput input ->
             //遍历input里边的DirectoryInput
@@ -103,14 +161,13 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                         !"R.class".equals(name) && !"BuildConfig.class".equals(name)) {
                                     ClassReader classReader = new ClassReader(file.bytes)
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
-                                    ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, option, propsItem)
+                                    ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, process)
                                     classReader.accept(cv, EXPAND_FRAMES)
                                     byte[] code = classWriter.toByteArray()
                                     FileOutputStream fos = new FileOutputStream(
                                             file.parentFile.absolutePath + File.separator + name)
                                     fos.write(code)
                                     fos.close()
-                                    AssassinMethodClassVisitor
                                 }
                                 println '//PluginImpl find file:' + file.getAbsolutePath()
                                 //project.logger.

@@ -5,25 +5,17 @@ package com.meetyou.assassin.plugin;
  */
 
 public class AssassinDO {
-    public String key;
-    public String value;
-    public String mate;//匹配类型,fuzzy还是full
-    public String type;//对象类型,method还是class
+    public String name;
+    public String des;//匹配类型,all还是normal
 
     @Override
     public boolean equals(Object o) {
-        String key = (String)o;
-        if(mate.equals("fuzzy")){
-            //模糊
-            return key.contains(this.key);
-        }else{
-            //完全匹配
-            return key.equals(this.key);
-        }
+        AssassinDO o1 = (AssassinDO)o;
+        return o1.name.contains(this.name) && o1.des.equals(des);
     }
 
     @Override
     public String toString() {
-        return "key:" + key + ",value:" + value + ",mate:" + mate + ",type:" + type;
+        return "name:" + name + ",des:" + des;
     }
 }
