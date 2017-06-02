@@ -12,6 +12,7 @@ import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
+import sun.instrument.TransformerManager
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 
@@ -143,7 +144,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     @Override
     public Set<QualifiedContent.Scope> getScopes() {
         if (isLibrary) {
-            return Sets.immutableEnumSet(QualifiedContent.Scope.PROJECT, QualifiedContent.Scope.PROJECT_LOCAL_DEPS);
+            return TransformManager.SCOPE_FULL_LIBRARY;
+//            return Sets.immutableEnumSet(QualifiedContent.Scope.PROJECT, QualifiedContent.Scope.PROJECT_LOCAL_DEPS);
         }
         return TransformManager.SCOPE_FULL_PROJECT;
     }
