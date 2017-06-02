@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="gradle-api-2.14.1">
+    <CLASSES>
+      <root url="jar://$APPLICATION_HOME_DIR$/gradle/gradle-2.14.1/caches/2.14.1/generated-gradle-jars/gradle-api-2.14.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

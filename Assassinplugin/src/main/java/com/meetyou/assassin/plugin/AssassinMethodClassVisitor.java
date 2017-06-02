@@ -129,7 +129,7 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodEnter() {
-                print("clazz:" + clazzName);
+//                print("clazz:" + clazzName);
                 if(!assassin){
                     return;
                 }
@@ -144,7 +144,6 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                         return;
                     }
                 }
-                print("onMethodEnter:"+name + ",desc=" + methodDesc + ",return="+Type.getReturnType(desc).toString());
 //                returnValue();
 
 //                for(Type type : types){
@@ -263,8 +262,11 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
                 }
 
-                //载入this到栈顶
-                loadThis();
+                if ((methodAccess & ACC_STATIC) == 0) {
+                    loadThis();
+                } else {
+                    push((String) null);
+                }
                 mv.visitLdcInsn(name);
                 loadArgArray();
                     Type[] types = Type.getArgumentTypes(methodDesc);
@@ -316,7 +318,12 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                     }
                 }
                 print("onMethodExit:"+name + ",desc=" + methodDesc + ",return="+Type.getReturnType(desc).toString());
-                loadThis();
+                if ((methodAccess & ACC_STATIC) == 0) {
+                    //非静态
+                    loadThis();
+                } else {
+                    push((String) null);
+                }
                 mv.visitLdcInsn(name);
                 loadArgArray();
                 mv.visitLdcInsn(Type.getReturnType(methodDesc).toString());

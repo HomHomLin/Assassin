@@ -23,4 +23,8 @@ public class MainActivity extends AppCompatActivity {
     public void show2(){
 
     }
+
+    public static void show(){
+
+    }
 }

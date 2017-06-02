@@ -2,7 +2,9 @@ package com.meetyou.assassin.plugin
 
 import com.android.build.api.transform.*
 import com.android.build.gradle.AppExtension
+import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
+import com.google.common.collect.Sets
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Plugin
@@ -22,11 +24,13 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     HashMap<String, ArrayList<AssassinDO>> process = new HashMap<>();
     String mReceiver;
 
+    boolean isLibrary = false;
+
     void processFile(String type, String it){
         if(type.equals("receiver")){
             //接收器处理
             mReceiver = it.trim().split("\\;")[0];
-            println "receiver:" + mReceiver
+            println "assassin----> receiver:" + mReceiver
             return;
         }
         ArrayList<AssassinDO> arrayList = process.get(type);
@@ -51,7 +55,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
             assassinDO.name = r[1];
         }
         arrayList.add(assassinDO);
-        println assassinDO.toString()
+        println "assassin----> assassinDO" + assassinDO.toString()
         process.put(type, arrayList);
     }
 
@@ -109,14 +113,26 @@ public class PluginImpl extends Transform implements Plugin<Project> {
             }
         }
         //遍历class文件和jar文件，在这里可以进行class文件asm文件替换
-        def android = project.extensions.getByType(AppExtension);
-        android.registerTransform(this)
+        if(project.plugins.hasPlugin("com.android.application")){
+            println '===assassin apply application=====' + project.getName()
+            def android = project.extensions.getByType(AppExtension);
+            android.registerTransform(this)
+        }else if(project.plugins.hasPlugin("com.android.library")){
+            isLibrary = true;
+            println '===assassin apply lib=====' + project.getName()
+            def android = project.extensions.getByType(LibraryExtension);
+            android.registerTransform(this)
+        }else{
+            println '===assassin apply other type=====' + project.getName()
+        }
+
+        println '==================apply end=================='
     }
 
 
     @Override
     public String getName() {
-        return "PluginImpl";
+        return "Assassin";
     }
 
     @Override
@@ -126,6 +142,9 @@ public class PluginImpl extends Transform implements Plugin<Project> {
 
     @Override
     public Set<QualifiedContent.Scope> getScopes() {
+        if (isLibrary) {
+            return Sets.immutableEnumSet(QualifiedContent.Scope.PROJECT, QualifiedContent.Scope.PROJECT_LOCAL_DEPS);
+        }
         return TransformManager.SCOPE_FULL_PROJECT;
     }
 
@@ -133,10 +152,16 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     public boolean isIncremental() {
         return false;
     }
+
+    @Override
+    void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
+        super.transform(transformInvocation)
+    }
+
     @Override
     void transform(Context context, Collection<TransformInput> inputs, Collection<TransformInput> referencedInputs,
                    TransformOutputProvider outputProvider, boolean isIncremental) throws IOException, TransformException, InterruptedException {
-        println '//===============asm visit start===============//'
+        println '==================assassin start=================='
         //配置文件读取
 //        Iterator<String> it = props.stringPropertyNames().iterator();
 //        ArrayList<AssassinDO> propsItem = new ArrayList<>();
@@ -186,8 +211,9 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                             file.parentFile.absolutePath + File.separator + name)
                                     fos.write(code)
                                     fos.close()
+                                    println 'Assassin-----> assassin file:' + file.getAbsolutePath()
                                 }
-                                println '//PluginImpl find file:' + file.getAbsolutePath()
+                                println 'Assassin-----> find file:' + file.getAbsolutePath()
                                 //project.logger.
                         }
                     }
@@ -208,7 +234,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 if (jarName.endsWith(".jar")) {
                     jarName = jarName.substring(0, jarName.length() - 4)
                 }
-                println '//PluginImpl find Jar:' + jarInput.getFile().getAbsolutePath()
+                println 'Assassin-----> find Jar:' + jarInput.getFile().getAbsolutePath()
 
                 //处理jar进行字节码注入处理 TODO
 
@@ -218,7 +244,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 FileUtils.copyFile(jarInput.file, dest)
             }
         }
-        println '//===============asm visit end===============//'
+        println '==================assasin end=================='
 
     }
 }
