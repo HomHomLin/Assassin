@@ -18,8 +18,8 @@
     <output-test url="file://$MODULE_DIR$/build/classes/test" />
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/groovy" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/groovy" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
@@ -92,6 +92,5 @@
     <orderEntry type="library" exported="" name="gradle-api-2.14.1" level="project" />
     <orderEntry type="library" exported="" name="groovy-all-2.4.4" level="project" />
     <orderEntry type="library" exported="" name="gradle-installation-beacon-2.14.1" level="project" />
-    <orderEntry type="library" exported="" name="Assassinplugin.Assassinplugin-1.0.2" level="project" />
   </component>
 </module>

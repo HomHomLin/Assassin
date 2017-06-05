@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Assassin.iml" filepath="$PROJECT_DIR$/Assassin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/AssassinImpl/AssassinImpl.iml" filepath="$PROJECT_DIR$/AssassinImpl/AssassinImpl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Assassinplugin/Assassinplugin.iml" filepath="$PROJECT_DIR$/Assassinplugin/Assassinplugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+    </modules>
+  </component>
+</project>
