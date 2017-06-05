@@ -2,14 +2,17 @@ package com.meetyou.assassin.plugin;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
+import org.objectweb.asm.tree.AnnotationNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by Linhh on 17/5/31.
@@ -23,6 +26,8 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     public String mReveiver = "com/meetyou/assassin/impl/AssassinReveiver";
 
     private HashMap<String, ArrayList<AssassinDO>> mProcess;
+
+    final List<AnnotationNode> nlist = new ArrayList<>();
 
     private boolean mAllInsert = false;
     private boolean mAllReplace = false;
@@ -82,13 +87,14 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if (Type.getDescriptor(AntiAssassin.class).equals(desc)) {
             assassin = false;
-        }
-        /*else if(Type.getDescriptor(AssassinInsert.class).equals(desc)){
+        } else if(Type.getDescriptor(AssassinInsert.class).equals(desc)){
             //插入
             mInsert = true;
             mReplace = false;
-        }*/
-        return super.visitAnnotation(desc, visible);
+        }
+        AnnotationNode an = new AnnotationNode(desc);
+        nlist.add(an);
+        return an;
     }
 
     @Override
@@ -288,12 +294,13 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                 mv.visitVarInsn(ASTORE, start_index);
 
                 //如果拦截器为真
-                if(mAllReplace || type.equals("replace")) {
-                    print("override:" + name);
+//                if(mAllReplace || type.equals("replace")) {
+//                    print("override:" + name);
 //                String methodKey = "method." + name;
-//                mv.visitMethodInsn(INVOKESTATIC, "com/meiyou/meetyoucost/TimeCache", "onIntecept", "()Z", false);
-//                Label l0 = new Label();
-//                mv.visitJumpInsn(IFEQ, l0);
+                mv.visitLdcInsn(name);
+                mv.visitMethodInsn(INVOKESTATIC, mReveiver, "onIntercept", "(Ljava/lang/String;)Z", false);
+                Label l0 = new Label();
+                mv.visitJumpInsn(IFEQ, l0);
                     onMethodExit(-1);
                     String return_v = Type.getReturnType(desc).toString();
                     if (!return_v.equals("V")) {
@@ -304,9 +311,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
                         mv.visitInsn(RETURN);
                     }
 
-//                    mv.visitLabel(l0);
+                    mv.visitLabel(l0);
                     mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
-                }
+//                }
 
 
             }

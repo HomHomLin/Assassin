@@ -4,7 +4,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-@ActivityProtocol({"test","tt"})
+@ActivityProtocol("test")
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -20,8 +20,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void show2(){
-
+    public Object show2(){
+        return null;
     }
 
     public static void show(){

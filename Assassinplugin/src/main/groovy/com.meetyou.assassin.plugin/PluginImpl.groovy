@@ -9,9 +9,13 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.ClassNode
 import sun.instrument.TransformerManager
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
@@ -205,17 +209,45 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                 if (name.endsWith(".class") && !name.startsWith("R\$") &&
                                         !"R.class".equals(name) && !"BuildConfig.class".equals(name)) {
                                     ClassReader classReader = new ClassReader(file.bytes)
+//                                    final List<AnnotationNode> nlist = new ArrayList<>();
+//
+//                                    ClassWriter cw = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
+//                                    classReader.accept(new ClassVisitor(Opcodes.ASM4,cw) {
+//                                        @Override
+//                                        public AnnotationVisitor visitAnnotation(String desc,
+//                                                                                 boolean visible) {
+//                                            AnnotationNode an = new AnnotationNode(desc);
+//                                            nlist.add(an);
+//                                            return an;
+//                                        }
+//                                    }, 2);
+//
+//                                    for (AnnotationNode annotationNode : nlist) {
+//                                        List vl = annotationNode.values;
+//                                        if(vl != null) {
+//                                            println name + ';test;' + vl.get(0).toString() + " ;" + vl.get(1)
+//                                        }
+//                                    }
+
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
-                                    ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
+                                    AssassinMethodClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
                                     classReader.accept(cv, EXPAND_FRAMES)
+
                                     byte[] code = classWriter.toByteArray()
                                     FileOutputStream fos = new FileOutputStream(
                                             file.parentFile.absolutePath + File.separator + name)
                                     fos.write(code)
                                     fos.close()
-                                    println 'Assassin-----> assassin file:' + file.getAbsolutePath()
+
+                                    for (AnnotationNode annotationNode : cv.nlist) {
+                                        List vl = annotationNode.values;
+                                        if(vl != null) {
+                                            println name + ';test;' + vl.get(0).toString() + " ;" + vl.get(1)
+                                        }
+                                    }
+                                    //println 'Assassin-----> assassin file:' + file.getAbsolutePath()
                                 }
-                                println 'Assassin-----> find file:' + file.getAbsolutePath()
+//                                println 'Assassin-----> find file:' + file.getAbsolutePath()
                                 //project.logger.
                         }
                     }
@@ -236,7 +268,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 if (jarName.endsWith(".jar")) {
                     jarName = jarName.substring(0, jarName.length() - 4)
                 }
-                println 'Assassin-----> find Jar:' + jarInput.getFile().getAbsolutePath()
+                //println 'Assassin-----> find Jar:' + jarInput.getFile().getAbsolutePath()
 
                 //处理jar进行字节码注入处理 TODO
 

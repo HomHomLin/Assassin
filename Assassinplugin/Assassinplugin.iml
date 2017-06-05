@@ -92,5 +92,6 @@
     <orderEntry type="library" exported="" name="gradle-api-2.14.1" level="project" />
     <orderEntry type="library" exported="" name="groovy-all-2.4.4" level="project" />
     <orderEntry type="library" exported="" name="gradle-installation-beacon-2.14.1" level="project" />
+    <orderEntry type="library" exported="" name="Assassinplugin.Assassinplugin-1.0.2" level="project" />
   </component>
 </module>
