@@ -1,6 +1,6 @@
 # Assassin
 
-Assassin是由美柚出品的一个小巧、方便但功能强大的Android切片框架。
+Assassin是由美柚出品的一个小巧、方便但功能强大的Android切片库。
 
 ## 什么是Assassin
 
@@ -16,23 +16,25 @@ Assassin不需要注解，不需要繁琐的配置，不需要学习成本。
 
 ## 举个栗子
 
-比如，武汉写了个类叫做Class A，里面有个方法叫Method A1，在App初始化过程中必然会调用这个Method A1，结果你发现Method A1这个方法实现的逻辑满足不了需求，或者武汉写的有bug，又或者你想加几行代码，又或者你想在App初始化过程中跳过Method A1不执行它，传统的做法是你跑到武汉这边来跟武汉说：MD，你写的方法有bug！赶紧给我改了。
+比如，有人写了个类叫做Class A，里面有个方法叫Method A1，在App初始化过程中必然会调用这个Method A1，结果你发现Method A1这个方法实现的逻辑满足不了需求，或者他写的有bug，又或者你想加几行代码，又或者你想在App初始化过程中跳过Method A1不执行它，传统的做法是你跑到那个人旁边来跟他说：MD，你写的方法有bug！赶紧给我改了。
 
-但是如果这个时候武汉不在呢？又或者这个方法是第三方提供的，而且它是不能被继承重写覆盖的，那么怎么办呢？
+但是如果这个时候这个人不在呢？又或者这个方法是第三方提供的，而且它是不能被继承重写覆盖的，那么怎么办呢？
 
 这时候你只需要写个Method B， 通过Assassin你就可以直接将你写的Method B替换这个Method A1，让他在App初始化过程中不执行A1，而执行你的Method B，甚至你可以控制是否执行Method A，甚至可以执行完Method A，再执行你的Method B，执行完B再执行A。
 
 通过Assassin，不光是Method A1， 整个Class A我都能替换。只要你开心。
 
-或者是你想统计所有方法的运行时间，你只需要一行代码，通过Assassin就可以轻松完成插桩。
+或者是你想统计所有方法的耗时，你只需要一行代码，通过Assassin就可以轻松完成插桩。
 
 或者是你想监听某些方法的执行，你想他们被执行的时候告诉你，通过Assassin你也可以做到。
+
+或者你想给所有方法执行的时候都弹一个toast。
 
 Assassin可以完成你当前做不到的事情。
 
 ## 衍生物
 
-无痕埋点、热补丁、自动化、插桩等等
+无痕埋点、热补丁、自动化、插桩等等都可以通过Assassin实现
 
 ## 使用方法
 
@@ -61,7 +63,15 @@ compile 'com.meiyou.aop:assassin:0.0.2-SNAPSHOT'
 @AntiAssassin
 public class TestDelegate extends IAssassinDelegate{
 //...
-//你的方法体
+//你的方法体，Assassin会把当前对象，以及执行方法的名字，入参变量，返回值类型全部给你
+
+    public void onMethodEnd(Object obj, String name, Object[] objects, String rtype){
+
+    }
+
+    public Object onMethodEnter(Object obj, String name, Object[] objects, String rtype){
+        return null;
+    }
 
 }
 ```
@@ -94,6 +104,20 @@ public class TestDelegate extends IAssassinDelegate{
 ### 完成编译
 
 这时候重新编译或者运行就可以发现你的代码被插入了
+
+## 逻辑图
+
+### 替换方法Replace
+
+虚线为原本执行的方法路线，实线为Assassin之后的方法路线。
+
+![p1](https://raw.githubusercontent.com/HomHomLin/Assassin/master/replace.png)
+
+### 插入方法Insert
+
+虚线为原本执行的方法路线，实线为Assassin之后的方法路线。
+
+![p2](https://raw.githubusercontent.com/HomHomLin/Assassin/master/insert.png)
 
 
 ## Developed By
