@@ -1,9 +1,11 @@
 package com.meetyou.assassin.plugin;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 import java.util.ArrayList;
@@ -27,6 +29,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     private String mDelegate;
     private boolean assassin = true;
     private String clazzName;
+
+    private boolean mInsert = false;
+    private boolean mReplace = false;
 
     public AssassinMethodClassVisitor(ClassVisitor classVisitor, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
@@ -78,6 +83,11 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
         if (Type.getDescriptor(AntiAssassin.class).equals(desc)) {
             assassin = false;
         }
+        /*else if(Type.getDescriptor(AssassinInsert.class).equals(desc)){
+            //插入
+            mInsert = true;
+            mReplace = false;
+        }*/
         return super.visitAnnotation(desc, visible);
     }
 

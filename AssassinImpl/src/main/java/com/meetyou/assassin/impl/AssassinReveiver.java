@@ -5,12 +5,21 @@ import android.util.Log;
 
 import com.meetyou.assassin.plugin.AntiAssassin;
 
+import java.util.HashMap;
+
 /**
  * Created by Linhh on 17/5/31.
  */
 @AntiAssassin
 public class AssassinReveiver {
   private static IAssassinDelegate mIAssassinDelegate;
+
+  private static HashMap<String, String> mMetas = new HashMap<>();
+  private static HashMap<String, IAssassinDelegate> mDelegates = new HashMap<>();
+
+  private static void putMeta(String key, String callClazz){
+    mMetas.put(key,callClazz);
+  }
 
   public static void register(String name){
     if(mIAssassinDelegate != null){
