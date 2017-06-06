@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/AssassinImpl/AssassinImpl.iml" filepath="$PROJECT_DIR$/AssassinImpl/AssassinImpl.iml" />
       <module fileurl="file://$PROJECT_DIR$/Assassinplugin/Assassinplugin.iml" filepath="$PROJECT_DIR$/Assassinplugin/Assassinplugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mylibrary/mylibrary.iml" filepath="$PROJECT_DIR$/mylibrary/mylibrary.iml" />
     </modules>
   </component>
 </project>

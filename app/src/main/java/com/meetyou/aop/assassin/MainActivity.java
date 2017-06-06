@@ -7,6 +7,7 @@ import android.widget.Button;
 
 import com.meetyou.assassin.plugin.Assassin;
 
+
 @Assassin("onClick")
 public class MainActivity extends AppCompatActivity {
 

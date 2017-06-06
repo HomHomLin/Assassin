@@ -1,1 +1,1 @@
-include ':app', ':Assassinplugin', ':AssassinImpl'
+include ':app', ':Assassinplugin', ':AssassinImpl', ':mylibrary'

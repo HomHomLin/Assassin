@@ -10,6 +10,8 @@ import org.apache.commons.io.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.impldep.aQute.lib.env.Env
+import org.gradle.internal.impldep.org.apache.http.util.TextUtils
+import org.gradle.util.TextUtil
 import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
@@ -33,6 +35,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     //project name
     String mProjectName;
     String mAssassinFile = "com/meetyou/assassin/pro/";
+    String mRootDir;
 
     HashMap<String, ArrayList<AssassinDO>> process = new HashMap<>();
     String mReceiver;
@@ -74,6 +77,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
 
     void apply(Project project) {
         mProjectName = project.name;
+        println "--->root=" + project.rootDir;
+        mRootDir = project.rootDir.absolutePath;
         println "--->pr=" + project.buildDir.absolutePath;
         /*project.task('testTask') << {
              println "Hello gradle plugin!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -199,7 +204,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                     ClassReader classReader = new ClassReader(file.bytes)
 
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
-                                    AssassinMethodClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
+                                    AssassinMethodClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mAssassinFile + mProjectName,mReceiver, process)
                                     classReader.accept(cv, EXPAND_FRAMES)
 
                                     byte[] code = classWriter.toByteArray()
@@ -212,7 +217,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                         String clazzName = cv.clazzName
                                         String[] c = clazzName.split("\\.")
 
-                                        filter = file.parentFile.absolutePath.split(c[0])[0]
+                                        filter = file.parentFile.absolutePath.split(File.separator + c[0] + File.separator)[0]
                                     }
 
                                     if(cv.nlist != null) {
@@ -268,16 +273,59 @@ public class PluginImpl extends Transform implements Plugin<Project> {
 
         println 'filter:' + filter
 
-        //将meta输出到文件中
-        String metafile = filter + mAssassinFile;
-        File file = new File(metafile)
-        file.mkdirs()
+        List<String> list;
+        File dir = new File(mRootDir);
+        dir.mkdirs()
+        File file = new File(mRootDir + "/pro");
+        if(file.exists()){
+            //先读出原本的内容
+            list = FileUtils.readLines(file)
+        }
 
-        AssassinMaker maker = new AssassinMaker();
+        if(isLibrary){
+            //库,将数据写入配置文件
+            if(list == null){
+                list = new ArrayList<>();
+            }
+            for(Map.Entry<String, ArrayList<String>> entrySet: mMetas.entrySet()){
+                String content_line = entrySet.key + "=";
+                for(String s : entrySet.value){
+                    content_line = content_line + s + "#"
+                }
+                list.add(content_line);
+            }
+            FileUtils.writeLines(file, list)
+        }else{
+            //主工程
+            if(list != null){
+                for(String str : list){
+                    String[] c = str.split("\\=");
+                    String key = c[0];
+                    String[] v = c[1].split("\\#");
+                    if(mMetas.containsKey(key)){
+                        ArrayList<String> l = mMetas.get(key);
+                        for(String s : v){
+                            if(!TextUtils.isEmpty(s)){
+                                l.add(s);
+                            }
+                        }
+                        mMetas.put(key,l)
+                    }
+                }
+            }
+            //将meta输出到文件中
+            String metafile = filter + File.separator + mAssassinFile;
+            File fmeta = new File(metafile)
+            fmeta.mkdirs()
 
-        FileOutputStream fos = new FileOutputStream(metafile + mProjectName + ".class")
-        fos.write(maker.make(mProjectName, mMetas))
-        fos.close()
+            AssassinMaker maker = new AssassinMaker();
+
+            FileOutputStream fos = new FileOutputStream(metafile + "AssassinMap.class")
+            fos.write(maker.make(mAssassinFile + "AssassinMap", mMetas))
+            fos.close()
+        }
+
+
 
 
         println '==================assasin end=================='

@@ -15,12 +15,12 @@ import java.util.Map;
 
 public class AssassinMaker {
 
-    public byte[] make(String projectName, HashMap<String, ArrayList<String>> metas){
+    public byte[] make(String pkg, HashMap<String, ArrayList<String>> metas){
         ClassWriter cw = new ClassWriter(0);
         FieldVisitor fv;
         MethodVisitor mv;
 
-        cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, "com/meetyou/aop/assassin/" + projectName, null, "java/lang/Object", new String[]{ "com/meetyou/assassin/impl/AssassinPro" });
+        cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, pkg, null, "java/lang/Object", new String[]{ "com/meetyou/assassin/impl/AssassinPro" });
 
 
         fv = cw.visitField(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, "map", "Ljava/util/HashMap;", "Ljava/util/HashMap<Ljava/lang/String;Ljava/util/ArrayList<Ljava/lang/String;>;>;", null);
@@ -38,7 +38,7 @@ public class AssassinMaker {
 
         mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getMap", "()Ljava/util/HashMap;", "()Ljava/util/HashMap<Ljava/lang/String;Ljava/util/ArrayList<Ljava/lang/String;>;>;", null);
         mv.visitCode();
-        mv.visitFieldInsn(Opcodes.GETSTATIC, "com/meetyou/aop/assassin/" + projectName, "map", "Ljava/util/HashMap;");
+        mv.visitFieldInsn(Opcodes.GETSTATIC, pkg, "map", "Ljava/util/HashMap;");
         mv.visitInsn(Opcodes.ARETURN);
         mv.visitMaxs(1, 1);
         mv.visitEnd();
@@ -48,7 +48,7 @@ public class AssassinMaker {
         mv.visitTypeInsn(Opcodes.NEW, "java/util/HashMap");
         mv.visitInsn(Opcodes.DUP);
         mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
-        mv.visitFieldInsn(Opcodes.PUTSTATIC, "com/meetyou/aop/assassin/" + projectName, "map", "Ljava/util/HashMap;");
+        mv.visitFieldInsn(Opcodes.PUTSTATIC, pkg, "map", "Ljava/util/HashMap;");
 
 
         for(Map.Entry<String, ArrayList<String>> entrySet: metas.entrySet()){
@@ -65,7 +65,7 @@ public class AssassinMaker {
                 mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/ArrayList", "add", "(Ljava/lang/Object;)Z", false);
                 mv.visitInsn(Opcodes.POP);
             }
-            mv.visitFieldInsn(Opcodes.GETSTATIC, "com/meetyou/aop/assassin/" + projectName, "map", "Ljava/util/HashMap;");
+            mv.visitFieldInsn(Opcodes.GETSTATIC, pkg, "map", "Ljava/util/HashMap;");
             mv.visitLdcInsn(key);
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/util/HashMap", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);

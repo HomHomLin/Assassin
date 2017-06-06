@@ -32,10 +32,12 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     private String mDelegate;
     private boolean assassin = true;
     public String clazzName;
+    public String pro;
 
-    public AssassinMethodClassVisitor(ClassVisitor classVisitor, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
+    public AssassinMethodClassVisitor(ClassVisitor classVisitor, String clazzName, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
         init(receiver, process);
+        pro = clazzName;
     }
 
 
