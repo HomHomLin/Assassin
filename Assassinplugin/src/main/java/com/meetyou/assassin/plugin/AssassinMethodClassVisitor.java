@@ -1,12 +1,10 @@
 package com.meetyou.assassin.plugin;
 
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.tree.AnnotationNode;
 
@@ -27,16 +25,13 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
     private HashMap<String, ArrayList<AssassinDO>> mProcess;
 
-    final List<AnnotationNode> nlist = new ArrayList<>();
+    public List<AnnotationNode> nlist;
 
     private boolean mAllInsert = false;
     private boolean mAllReplace = false;
     private String mDelegate;
     private boolean assassin = true;
-    private String clazzName;
-
-    private boolean mInsert = false;
-    private boolean mReplace = false;
+    public String clazzName;
 
     public AssassinMethodClassVisitor(ClassVisitor classVisitor, String receiver, HashMap<String, ArrayList<AssassinDO>> process){
         super(Opcodes.ASM5,classVisitor);
@@ -69,8 +64,9 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        super.visit(version, access, name, signature, superName, interfaces);
         clazzName = name.replace("/",".");
+        super.visit(version, access, name, signature, superName, interfaces);
+
     }
 
     @Override
@@ -87,14 +83,16 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
     public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if (Type.getDescriptor(AntiAssassin.class).equals(desc)) {
             assassin = false;
-        } else if(Type.getDescriptor(AssassinInsert.class).equals(desc)){
-            //插入
-            mInsert = true;
-            mReplace = false;
+        } else if(Type.getDescriptor(Assassin.class).equals(desc)){
+            //执行
+            if(nlist == null){
+                nlist = new ArrayList<>();
+            }
+            AnnotationNode an = new AnnotationNode(desc);
+            nlist.add(an);
+            return an;
         }
-        AnnotationNode an = new AnnotationNode(desc);
-        nlist.add(an);
-        return an;
+        return super.visitAnnotation(desc, visible);
     }
 
     @Override

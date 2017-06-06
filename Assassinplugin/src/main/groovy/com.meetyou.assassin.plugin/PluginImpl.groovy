@@ -9,10 +9,13 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.internal.impldep.aQute.lib.env.Env
 import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.FieldVisitor
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
@@ -25,7 +28,12 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
  */
 
 public class PluginImpl extends Transform implements Plugin<Project> {
-//    def props = new Properties()
+    //metas
+    HashMap<String, ArrayList<String>> mMetas = new HashMap<>();
+    //project name
+    String mProjectName;
+    String mAssassinFile = "com/meetyou/assassin/pro/";
+
     HashMap<String, ArrayList<AssassinDO>> process = new HashMap<>();
     String mReceiver;
 
@@ -65,6 +73,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     }
 
     void apply(Project project) {
+        mProjectName = project.name;
+        println "--->pr=" + project.buildDir.absolutePath;
         /*project.task('testTask') << {
              println "Hello gradle plugin!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
          }
@@ -168,31 +178,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
     void transform(Context context, Collection<TransformInput> inputs, Collection<TransformInput> referencedInputs,
                    TransformOutputProvider outputProvider, boolean isIncremental) throws IOException, TransformException, InterruptedException {
         println '==================assassin start=================='
-        //配置文件读取
-//        Iterator<String> it = props.stringPropertyNames().iterator();
-//        ArrayList<AssassinDO> propsItem = new ArrayList<>();
-//        String option  = AssassinMethodClassVisitor.OPTION_DEFAULT;
-//        while(it.hasNext()){
-//            String key = it.next();
-//            String v = props[key];
-//            //打印配置
-//            println key + "=" + v
-//            if(key.equals(AssassinMethodClassVisitor.OPTION_NAME)){
-//                option = v;
-//                continue;
-//            }
-//            //将配置数据封装
-//            AssassinDO assassinDO = new AssassinDO();
-//            String[] itemKey = key.split("\\.");
-//            assassinDO.mate = itemKey[0];
-//            assassinDO.type = itemKey[1];
-//            assassinDO.key = itemKey[2];
-//            assassinDO.value = v;
-//
-//            println assassinDO.toString()
-//
-//            propsItem.add(assassinDO);
-//        }
+        String filter = null;
+
         //遍历inputs里的TransformInput
         inputs.each { TransformInput input ->
             //遍历input里边的DirectoryInput
@@ -208,26 +195,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                 //这里进行我们的处理 TODO
                                 if (name.endsWith(".class") && !name.startsWith("R\$") &&
                                         !"R.class".equals(name) && !"BuildConfig.class".equals(name)) {
+
                                     ClassReader classReader = new ClassReader(file.bytes)
-//                                    final List<AnnotationNode> nlist = new ArrayList<>();
-//
-//                                    ClassWriter cw = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
-//                                    classReader.accept(new ClassVisitor(Opcodes.ASM4,cw) {
-//                                        @Override
-//                                        public AnnotationVisitor visitAnnotation(String desc,
-//                                                                                 boolean visible) {
-//                                            AnnotationNode an = new AnnotationNode(desc);
-//                                            nlist.add(an);
-//                                            return an;
-//                                        }
-//                                    }, 2);
-//
-//                                    for (AnnotationNode annotationNode : nlist) {
-//                                        List vl = annotationNode.values;
-//                                        if(vl != null) {
-//                                            println name + ';test;' + vl.get(0).toString() + " ;" + vl.get(1)
-//                                        }
-//                                    }
 
                                     ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
                                     AssassinMethodClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
@@ -239,10 +208,28 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                     fos.write(code)
                                     fos.close()
 
-                                    for (AnnotationNode annotationNode : cv.nlist) {
-                                        List vl = annotationNode.values;
-                                        if(vl != null) {
-                                            println name + ';test;' + vl.get(0).toString() + " ;" + vl.get(1)
+                                    if(filter == null){
+                                        String clazzName = cv.clazzName
+                                        String[] c = clazzName.split("\\.")
+
+                                        filter = file.parentFile.absolutePath.split(c[0])[0]
+                                    }
+
+                                    if(cv.nlist != null) {
+                                        for (AnnotationNode annotationNode : cv.nlist) {
+                                            List vl = annotationNode.values;
+                                            if (vl != null) {
+                                                //vl.get(0).toString() 属性名字
+                                                ArrayList<String> metaClazz = mMetas.get(vl.get(1));
+                                                if (metaClazz == null){
+                                                    metaClazz = new ArrayList<>();
+                                                }
+                                                if(!metaClazz.contains(cv.clazzName)){
+                                                    metaClazz.add(cv.clazzName);
+                                                }
+                                                mMetas.put(vl.get(1), metaClazz);
+                                                println cv.clazzName + ';' + vl.get(0).toString() + "=" + vl.get(1)
+                                            }
                                         }
                                     }
                                     //println 'Assassin-----> assassin file:' + file.getAbsolutePath()
@@ -278,7 +265,23 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 FileUtils.copyFile(jarInput.file, dest)
             }
         }
+
+        println 'filter:' + filter
+
+        //将meta输出到文件中
+        String metafile = filter + mAssassinFile;
+        File file = new File(metafile)
+        file.mkdirs()
+
+        AssassinMaker maker = new AssassinMaker();
+
+        FileOutputStream fos = new FileOutputStream(metafile + mProjectName + ".class")
+        fos.write(maker.make(mProjectName, mMetas))
+        fos.close()
+
+
         println '==================assasin end=================='
 
     }
+
 }

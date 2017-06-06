@@ -4,7 +4,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-@ActivityProtocol("test")
+
+import com.meetyou.assassin.plugin.Assassin;
+
+@Assassin("onClick")
 public class MainActivity extends AppCompatActivity {
 
     @Override
