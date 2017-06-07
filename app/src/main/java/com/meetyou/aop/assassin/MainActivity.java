@@ -31,4 +31,6 @@ public class MainActivity extends AppCompatActivity {
     public static void show(){
 
     }
+
+    public void show5(){}
 }

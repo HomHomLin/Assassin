@@ -1,5 +1,5 @@
 apply plugin: 'com.android.library'
-//apply plugin: 'assassin'
+apply plugin: 'assassin'
 
 android {
     compileSdkVersion 25
@@ -29,5 +29,5 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:25.3.1'
     testCompile 'junit:junit:4.12'
-//    compile project(':AssassinImpl')
+    compile project(':AssassinImpl')
 }

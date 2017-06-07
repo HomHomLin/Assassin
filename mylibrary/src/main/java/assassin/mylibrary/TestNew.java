@@ -7,4 +7,5 @@ import com.meetyou.assassin.plugin.Assassin;
  */
 @Assassin("onShow")
 public class TestNew {
+    public void show1(){}
 }
