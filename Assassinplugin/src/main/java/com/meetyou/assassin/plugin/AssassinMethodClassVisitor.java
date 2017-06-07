@@ -140,6 +140,10 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
             @Override
             protected void onMethodEnter() {
 //                print("clazz:" + clazzName);
+                if(name != null){
+                    print("clazz:" + clazzName + ";method:" +name);
+                    return;
+                }
                 if(!assassin){
                     return;
                 }
@@ -313,6 +317,10 @@ public class AssassinMethodClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodExit(int i) {
+                if(name != null){
+                    print("clazz exit:" + clazzName + ";method:" +name);
+                    return;
+                }
                 if(!assassin){
                     return;
                 }

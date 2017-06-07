@@ -7,12 +7,20 @@ import com.android.build.gradle.internal.pipeline.TransformManager
 import com.google.common.collect.Sets
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.internal.impldep.org.apache.ivy.util.FileUtil
+import org.gradle.internal.impldep.org.codehaus.plexus.util.IOUtil
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import sun.instrument.TransformerManager
+
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 
@@ -113,19 +121,8 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                 }
             }
         }
-        //遍历class文件和jar文件，在这里可以进行class文件asm文件替换
-        if(project.plugins.hasPlugin("com.android.application")){
-            println '===assassin apply application=====' + project.getName()
-            def android = project.extensions.getByType(AppExtension);
-            android.registerTransform(this)
-        }else if(project.plugins.hasPlugin("com.android.library")){
-            isLibrary = true;
-            println '===assassin apply lib=====' + project.getName()
-            def android = project.extensions.getByType(LibraryExtension);
-            android.registerTransform(this)
-        }else{
-            println '===assassin apply other type=====' + project.getName()
-        }
+        def android = project.extensions.getByType(AppExtension);
+        android.registerTransform(this)
 
         println '==================apply end=================='
     }
@@ -215,7 +212,7 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                                     fos.close()
                                     println 'Assassin-----> assassin file:' + file.getAbsolutePath()
                                 }
-                                println 'Assassin-----> find file:' + file.getAbsolutePath()
+//                                println 'Assassin-----> find file:' + file.getAbsolutePath()
                                 //project.logger.
                         }
                     }
@@ -232,17 +229,53 @@ public class PluginImpl extends Transform implements Plugin<Project> {
                  * 重名名输出文件,因为可能同名,会覆盖
                  */
                 def jarName = jarInput.name
+//                println "Assassin jar jarName:" + jarName + "; "+ jarInput.file.absolutePath
                 def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
                 if (jarName.endsWith(".jar")) {
+
                     jarName = jarName.substring(0, jarName.length() - 4)
                 }
-                println 'Assassin-----> find Jar:' + jarInput.getFile().getAbsolutePath()
+
+                if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
+                    JarFile jarFile = new JarFile(jarInput.file);
+                    Enumeration enumeration = jarFile.entries();
+                    File tmpFile = new File(jarInput.file.getParent() + File.separator + "classes.jar.tmp");
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile));
+                    while (enumeration.hasMoreElements()) {
+                        JarEntry jarEntry = (JarEntry) enumeration.nextElement();
+                        String entryName = jarEntry.getName();
+                        ZipEntry zipEntry = new ZipEntry(entryName);
+
+                        InputStream inputStream = jarFile.getInputStream(jarEntry);
+                        if (entryName.endsWith(".class") && !entryName.contains("R\$") &&
+                                !entryName.contains("R.class") && !entryName.contains("BuildConfig.class")) {
+                            //class文件处理
+                            println "entryName:" + entryName
+                            jarOutputStream.putNextEntry(zipEntry);
+                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
+                            ClassWriter classWriter = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
+                            ClassVisitor cv = new AssassinMethodClassVisitor(classWriter, mReceiver, process)
+                            classReader.accept(cv, EXPAND_FRAMES)
+                            byte[] code = classWriter.toByteArray()
+                            jarOutputStream.write(code);
+                        } else {
+                            jarOutputStream.putNextEntry(zipEntry);
+                            jarOutputStream.write(IOUtils.toByteArray(inputStream));
+                        }
+                        jarOutputStream.closeEntry();
+                    }
+                    jarOutputStream.close();
+                    jarFile.close();
+                    jarInput.file.delete();
+                    tmpFile.renameTo(jarInput.file);
+                }
+//                println 'Assassin-----> find Jar:' + jarInput.getFile().getAbsolutePath()
 
                 //处理jar进行字节码注入处理 TODO
 
                 def dest = outputProvider.getContentLocation(jarName + md5Name,
                         jarInput.contentTypes, jarInput.scopes, Format.JAR)
-
+                println 'Assassin-----> copy to Jar:' + dest.absolutePath
                 FileUtils.copyFile(jarInput.file, dest)
             }
         }
